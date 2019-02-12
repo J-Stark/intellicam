@@ -1,19 +1,22 @@
-from Tkinter import *
+import arduinoHandler
+from tkinter import *
 
 root = Tk()
-root.title("Note Taker")
+root.title("Intelligent Camera Control")
+arduino = arduinoHandler.Arduino('ACM0', 9600)
 
-root.mainloop()
+def LED():
+    arduino.LED()
 
-button1 = Button(root, text="button1")
-button2 = Button(root, text="button2")
+button1 = Button(root, text="LED", command=LED)
+button2 = Button(root, text="Run")
 button3 = Button(root, text="button3")
 
-text = Entry(root)
-listbox = Listbox(root)
 
-text.pack()
 button1.pack()
 button2.pack()
 button3.pack()
-listbox.pack()
+
+
+
+root.mainloop()
