@@ -11,12 +11,12 @@ int servoIncrement = 1;
 int loopDelay = 100;
 
 // Pins
-int panPin = 9;
-int tiltPin = 10;
+int panPin = 10;
+int tiltPin = 9;
 int sensorPin = 11;
 char panPotPin = A0;
 char tiltPotPin = A1;
-//int pictureLED = ;
+int pictureLED = 5;
 int maintenanceLED = 3;
 int sensorLED = 4;
 int buttonPin = 2;
@@ -30,7 +30,7 @@ bool detected = false;
 String command = "";
 bool panPot = false;
 bool tiltPot = false;
-
+bool isBlinking = false;
 // Button Variables
 int buttonTime = 0; 
 int buttonState = 0;
@@ -50,7 +50,7 @@ void setup()
 void setPins()
 {
   pinMode(LED_BUILTIN, OUTPUT);
-  //pinMode(pictureLED, OUTPUT);
+  pinMode(pictureLED, OUTPUT);
   pinMode(maintenanceLED, OUTPUT);
   pinMode(sensorLED, OUTPUT);
 
@@ -124,7 +124,6 @@ bool ButtonMaintenance()
       if (((now()) - buttonTime) >= 3)
       {
         maintenanceState = !maintenanceState;
-        switchLED(maintenanceLED, true);
         Serial.println("Maintenance Mode is " + String(maintenanceState));
         Serial.println("Maintenance Mode is " + String(maintenanceState));
         Serial.println("Maintenance Mode is " + String(maintenanceState));
@@ -133,6 +132,11 @@ bool ButtonMaintenance()
         buttonTime = 0;
         startCounter = false;
       }
+  }
+  if (maintenanceState)
+  {
+    switchLED(maintenanceLED);
+    delay(100);
   }
   prevButtonState = buttonState;
   startCounter = false;
@@ -149,9 +153,7 @@ void Pots()
 // Then executes the command.
 void processCommand()
 {
-    if (command == "blank") // Don't touch Servos
-      servoInteract = 0;
-    else if (command == "panTo") // char for 'pan'
+    if (command == "panTo") // char for 'pan'
       servoInteract = 1;
     else if (command == "tiltTo") // char for 'tilt'
       servoInteract = 2;
@@ -160,43 +162,45 @@ void processCommand()
     else if (command == "tilt")
       servoInteract = 4;
     else if (command == "LED") // char for 'LED'
-      switchLED(LED_BUILTIN, false);
+      switchLED(LED_BUILTIN);
     else if (command == "sensor") // char for 'sensor'
+    {
       if (detected)
       {
         Serial.write("x");
-        switchLED(sensorLED, false);
       }
-   // else if (command == "picture")
-   //   switchLED(pictureLED, true);
-    else if (command.toInt() >= 0 && command.toInt() <= 200)
+    }
+    else if (command == "picture")
     {
+      Serial.println("picture");
+      switchLED(pictureLED);
+      delay(300);
+      switchLED(pictureLED);
+      delay(300);
+    }
+    // THIS ELSE IF STATEMENT HAS TO BE LAST IN THE "SWITCH" OTHERWISE STUFF RUNS INCORRECTLY.
+    else if (command.toInt() >= -200 && command.toInt() <= 200)
+    {
+      Serial.println("FUCK THIS SHIT");
       if (servoInteract == 1) // if panning to Position
         servoMoveTo(servoPan, command.toInt());
       else if (servoInteract == 2) // if tilting to Position
         servoMoveTo(servoTilt, command.toInt());
       else if (servoInteract == 3) // if panning slowly
-        servoMove(servoTilt, command.toInt());
+        servoMove(servoPan, command.toInt());
       else if (servoInteract == 4) // if tilting slowly
         servoMove(servoTilt, command.toInt());
-      else 
-        Serial.println("");
     }
+    
+    
     else
       Serial.println("Command Unknown..");
     command = "";
 }
 // Read the state of the LED. Then turn it into the opposite state.
 // Looks confusing, but it is just an on/off switch.
-void switchLED (int LED, bool BLINK)
+void switchLED (int LED)
 {
-  if (BLINK)
-  {
-    digitalWrite(LED, !(digitalRead(LED)));
-    delay(500);
-    switchLED(LED, false);
-  }
-  else
     digitalWrite(LED, !(digitalRead(LED)));
 }
 
