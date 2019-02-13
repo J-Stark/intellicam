@@ -6,16 +6,17 @@ import time
 
 class Camera():
 
-    def __init__(self, ID):
+    picture = 0;
+
+    def __init__(self, ID, arduino):
         self.__cameraID = ID
         self.__cameraName = 'Intelligent Camera ' + str(self.__cameraID)
         self.__cam = cv2.VideoCapture(self.__cameraID)
-
+        self.__arduino = arduino
     def getName(self):
         return self.__cameraName
     def getImg(self):
         return_val, img = self.__cam.read()
-        print(img)
         img = cv2.flip(img, 1)
         if return_val:
             return img
@@ -26,7 +27,6 @@ class Camera():
         pedestrians = cascades.person_cascade.detectMultiScale(gray)
         for (x, y, w, h) in pedestrians:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            print(x,y)
         return img
     def detectFace(self):
         img = self.getImg()
@@ -49,7 +49,6 @@ class Camera():
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Haar-cascade classifier needs a grayscale image
         pedestrians = cascades.person_cascade.detectMultiScale(gray)
         faces = cascades.face_cascade.detectMultiScale(gray, 1.3, 5)
-        i = 5
         for (x, y, w, h) in pedestrians:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
             for (x, y, w, h) in faces:
@@ -78,22 +77,20 @@ class Camera():
                 cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
                 for (sx, sy, sw, sh) in smiles:
                     cv2.rectangle(roi_color, (sx,sy), (sx+sw,sy+sh),(0, 255, 0), 2)
+                    time.sleep(0.3)
                     self.takePicture()
         return img
     def takePicture(self):
-        #frameID = self.getImg().get(0)
         path, dirs, files = next(os.walk("./images/"))
         file_count = len(files)
         if (file_count < 20):
             filename = "images/" + str(int(file_count)) + ".jpg"
             cv2.imwrite(filename, self.getImg())
-
-
+            self.__arduino.picture()
 
 class ServoCamera(Camera):
     def __init__(self, ID, arduino):
-        Camera.__init__(self, ID)
-        self.__arduino = arduino
+        Camera.__init__(self, ID, arduino)
     def move(self,command):
         self.__arduino.serial.write(command)
     def panTo(self, position):
@@ -108,11 +105,3 @@ class ServoCamera(Camera):
     def pan(self, position):
         command = 'pan;' + str(position) + ';'
         self.move(command.encode())
-    def readPan(self):
-        command = 'readP;'
-        firstLine = self.__arduino.serial.read()
-        print(firstLine)
-    def readTilt(self):
-        command = 'readT;'
-        firstLine = self.__arduino.serial.read()
-        print(firstLine)

@@ -8,5 +8,8 @@ class Arduino():
         time.sleep(1)
     def LED(self):
         self.serial.write(b'LED;')
+    def picture(self):
+        self.serial.write(b'picture;')
+        print("PICTURE");
     def sensor(self):
         self.serial.write(b'sensor;')
