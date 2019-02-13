@@ -30,7 +30,7 @@ def run():
 def activateCamera(ID, Active):
     camera = cameraList[ID]
     while Active:
-        cv2.imshow(camera.getName(), camera.detectFace())
+        cv2.imshow(camera.getName(), camera.detectFullFace())
         if cv2.waitKey(1) == 27:
             break
     cv2.destroyWindow(camera.getName())

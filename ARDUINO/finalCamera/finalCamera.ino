@@ -16,7 +16,9 @@ int tiltPin = 10;
 int sensorPin = 11;
 char panPotPin = A0;
 char tiltPotPin = A1;
-int ledPin = 8;
+//int pictureLED = ;
+int maintenanceLED = 3;
+int sensorLED = 4;
 int buttonPin = 2;
 
 // DO NOT TOUCH. Declaring all our global variables.
@@ -47,11 +49,15 @@ void setup()
 }
 void setPins()
 {
-  pinMode(LED_BUILTIN, OUTPUT); 
+  pinMode(LED_BUILTIN, OUTPUT);
+  //pinMode(pictureLED, OUTPUT);
+  pinMode(maintenanceLED, OUTPUT);
+  pinMode(sensorLED, OUTPUT);
+
+  
   pinMode(panPotPin, INPUT_PULLUP);
   pinMode(tiltPotPin, INPUT_PULLUP);
   pinMode(sensorPin, INPUT);
-  pinMode(ledPin, OUTPUT);
   pinMode(buttonPin, INPUT_PULLUP);
 }
 // Main Loop.
@@ -86,15 +92,15 @@ void PIR()
   int currentTime = now();
   if (digitalRead(sensorPin))
   {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(sensorLED, HIGH);
     detected = true;
     startTime = now();
   }
   else
-    digitalWrite(ledPin, LOW);
+    digitalWrite(sensorLED, LOW);
   if ((currentTime - startTime) >= 30)
   {
-    digitalWrite(ledPin, LOW);
+    digitalWrite(sensorLED, LOW);
     detected = false;
   }
 }
@@ -118,6 +124,7 @@ bool ButtonMaintenance()
       if (((now()) - buttonTime) >= 3)
       {
         maintenanceState = !maintenanceState;
+        switchLED(maintenanceLED, true);
         Serial.println("Maintenance Mode is " + String(maintenanceState));
         Serial.println("Maintenance Mode is " + String(maintenanceState));
         Serial.println("Maintenance Mode is " + String(maintenanceState));
@@ -153,14 +160,15 @@ void processCommand()
     else if (command == "tilt")
       servoInteract = 4;
     else if (command == "LED") // char for 'LED'
-      switchLED();
+      switchLED(LED_BUILTIN, false);
     else if (command == "sensor") // char for 'sensor'
       if (detected)
+      {
         Serial.write("x");
-    else if (command == "readP") // read Pan Angle
-      readServo(servoPan);
-    else if (command == "readT") // read Tilt Angle
-      readServo(servoTilt);
+        switchLED(sensorLED, false);
+      }
+   // else if (command == "picture")
+   //   switchLED(pictureLED, true);
     else if (command.toInt() >= 0 && command.toInt() <= 200)
     {
       if (servoInteract == 1) // if panning to Position
@@ -180,9 +188,16 @@ void processCommand()
 }
 // Read the state of the LED. Then turn it into the opposite state.
 // Looks confusing, but it is just an on/off switch.
-void switchLED ()
+void switchLED (int LED, bool BLINK)
 {
-    digitalWrite(LED_BUILTIN, !(digitalRead(LED_BUILTIN)));
+  if (BLINK)
+  {
+    digitalWrite(LED, !(digitalRead(LED)));
+    delay(500);
+    switchLED(LED, false);
+  }
+  else
+    digitalWrite(LED, !(digitalRead(LED)));
 }
 
 // Take the Servo to move, and the position to move it to.
