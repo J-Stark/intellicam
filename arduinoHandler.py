@@ -13,3 +13,5 @@ class Arduino():
         print("PICTURE");
     def sensor(self):
         self.serial.write(b'sensor;')
+    def write(self, command):
+        self.serial.write(command)

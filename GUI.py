@@ -1,22 +1,22 @@
 import arduinoHandler
+import main_program
 from tkinter import *
 
 root = Tk()
 root.title("Intelligent Camera Control")
-arduino = arduinoHandler.Arduino('ACM0', 9600)
 
 def LED():
-    arduino.LED()
+    main_program.arduino.LED()
+
+def start():
+    main_program.run()
 
 button1 = Button(root, text="LED", command=LED)
-button2 = Button(root, text="Run")
-button3 = Button(root, text="button3")
+button2 = Button(root, text="Run", command=start)
 
 
 button1.pack()
 button2.pack()
-button3.pack()
-
 
 
 root.mainloop()

@@ -1,6 +1,6 @@
 // Dependencies
 #include <Servo.h>
-#include <Time.h>
+//#include <Time.h>
 #include <TimeLib.h>
 Servo servoPan;
 Servo servoTilt;
@@ -14,32 +14,31 @@ int loopDelay = 100;
 int panPin = 10;
 int tiltPin = 9;
 int sensorPin = 11;
-char panPotPin = A0;
-char tiltPotPin = A1;
 int pictureLED = 5;
 int maintenanceLED = 3;
 int sensorLED = 4;
 int buttonPin = 2;
+char panPotPin = A0;
+char tiltPotPin = A1;
 
 // DO NOT TOUCH. Declaring all our global variables.
 char incomingByte = 0;
 int servoInteract = 0;
 int startTime = 0;
-int curPos = 0;
-bool detected = false;
 String command = "";
 bool panPot = false;
 bool tiltPot = false;
-bool isBlinking = false;
+bool detected = false;
+
+
 // Button Variables
-int buttonTime = 0; 
+//int buttonTime = 0; 
 int buttonState = 0;
 int prevButtonState = 1;
 bool maintenanceState = false;
 bool startCounter = false;
 
 // Handle all the pins being enabled. Attach Servos.
-
 void setup()
 {
   Serial.begin(9600);
@@ -98,22 +97,25 @@ void PIR()
   }
   else
     digitalWrite(sensorLED, LOW);
+  
   if ((currentTime - startTime) >= 30)
-  {
-    digitalWrite(sensorLED, LOW);
     detected = false;
-  }
+      //digitalWrite(sensorLED, LOW);
 }
+// Just exists to call our Button and Sensor functions. Checks regularly if they are active.
 void ExtraHardware()
 {
   PIR();
   if (ButtonMaintenance())
     Pots();
 }
+// Function for handling our button. If it is clicked for longer than 3 seconds
+// we then enter "Maintenance" Mode. This also makes an LED blink so the user knows
+// in Maintenance Mode, the user can use Potentiometers to adjust the camera.
 bool ButtonMaintenance()
 {
   buttonState = digitalRead(buttonPin);
-  
+  int buttonTime = 0
   if (buttonState == LOW && prevButtonState == HIGH)
   {
     buttonTime = now(); 
@@ -142,28 +144,30 @@ bool ButtonMaintenance()
   startCounter = false;
   return maintenanceState;
 }
+
+// Function for sending the Potentiometer data to the servos.
 void Pots()
 {
   float panSensorValue = map(analogRead(panPotPin), 0, 1023, 0, 200);
   float tiltSensorValue = map(analogRead(tiltPotPin), 0, 1023, 0, 200);
-    servoMoveTo(servoPan,panSensorValue);
-    servoMoveTo(servoTilt,tiltSensorValue);
+  servoMoveTo(servoPan,panSensorValue);
+  servoMoveTo(servoTilt,tiltSensorValue);
 }
 // It checks the command we got. Then looks up if it matches one of our words in bits.
 // Then executes the command.
 void processCommand()
 {
-    if (command == "panTo") // char for 'pan'
+    if (command == "panTo") 
       servoInteract = 1;
-    else if (command == "tiltTo") // char for 'tilt'
+    else if (command == "tiltTo") 
       servoInteract = 2;
     else if (command == "pan")
       servoInteract = 3;
     else if (command == "tilt")
       servoInteract = 4;
-    else if (command == "LED") // char for 'LED'
+    else if (command == "LED") 
       switchLED(LED_BUILTIN);
-    else if (command == "sensor") // char for 'sensor'
+    else if (command == "sensor") 
     {
       if (detected)
       {
@@ -178,10 +182,8 @@ void processCommand()
       switchLED(pictureLED);
       delay(300);
     }
-    // THIS ELSE IF STATEMENT HAS TO BE LAST IN THE "SWITCH" OTHERWISE STUFF RUNS INCORRECTLY.
     else if (command.toInt() >= -200 && command.toInt() <= 200)
     {
-      Serial.println("FUCK THIS SHIT");
       if (servoInteract == 1) // if panning to Position
         servoMoveTo(servoPan, command.toInt());
       else if (servoInteract == 2) // if tilting to Position
@@ -191,8 +193,6 @@ void processCommand()
       else if (servoInteract == 4) // if tilting slowly
         servoMove(servoTilt, command.toInt());
     }
-    
-    
     else
       Serial.println("Command Unknown..");
     command = "";
@@ -204,11 +204,13 @@ void switchLED (int LED)
     digitalWrite(LED, !(digitalRead(LED)));
 }
 
-// Take the Servo to move, and the position to move it to.
+
+// Take the Servo to move, and the amount of degrees to move (pos).
 // Then iterate around it with a for loop.
 void servoMove(Servo servo, int pos)
 {
   int finalPosition = (servo.read() + pos);
+  int curPos = servo.read();
   if (curPos < finalPosition)
     for (int i = curPos; i <= finalPosition; i += servoIncrement)
       servo.write(i);
@@ -216,9 +218,11 @@ void servoMove(Servo servo, int pos)
     for (int i = finalPosition; i >= finalPosition; i -= servoIncrement)
       servo.write(i);
 }
+// Take the Servo to move, and the position to move it to.
+// Then iterate around it with a for loop.
 void servoMoveTo(Servo servo, int pos)
 {
-  curPos = servo.read();
+  int curPos = servo.read();
   if (curPos < pos)
     for (int i = curPos; i <= pos; i += servoIncrement)
       servo.write(i);
