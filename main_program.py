@@ -1,11 +1,10 @@
 import cv2
-import random
-import numpy
 from arduinoHandler import *
 from CameraSystem import *
 
 cameraList = []
 arduino = Arduino('ACM0', 9600)
+
 
 def run():
 
@@ -19,7 +18,8 @@ def run():
         detection = arduino.serial.read()
         if (detection == b'x'):
             while True:
-                cv2.imshow(Camera2.getName(), Camera2.detectFullFace())
+                for cam in cameraList:
+                    cv2.imshow(cam.getName(), cam.detectFullFace())
                 if cv2.waitKey(1) == 27:
                     break
             cv2.destroyAllWindows()
